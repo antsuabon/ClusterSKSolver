@@ -10,3 +10,6 @@ add_executable (ClusterSKSolver "ClusterSKSolver.cpp" "ClusterSKSolver.h")
 
 # Dependencia de spdlog
 target_link_libraries(ClusterSKSolver spdlog::spdlog)
+
+# Dependencia de MPI
+target_link_libraries(ClusterSKSolver ${MPI_C_LIBRARIES})

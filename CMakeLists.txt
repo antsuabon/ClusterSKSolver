@@ -10,5 +10,8 @@ project (ClusterSKSolver)
 add_subdirectory(external/spdlog)
 find_package(spdlog)
 
+find_package(MPI)
+include_directories(SYSTEM ${MPI_INCLUDE_PATH})
+
 # Incluya los subproyectos.
 add_subdirectory(ClusterSKSolver)

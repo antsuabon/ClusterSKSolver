@@ -7,3 +7,6 @@ cmake_minimum_required (VERSION 3.8)
 add_executable (ClusterSKSolver "ClusterSKSolver.cpp" "ClusterSKSolver.h")
 
 # TODO: Agregue pruebas y destinos de instalación si es necesario.
+
+# Dependencia de spdlog
+target_link_libraries(ClusterSKSolver spdlog::spdlog)

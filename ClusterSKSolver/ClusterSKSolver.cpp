@@ -7,6 +7,6 @@ using namespace std;
 
 int main()
 {
-	cout << "Hello CMake." << endl;
+	spdlog::info("Hello world!");
 	return 0;
 }

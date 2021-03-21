@@ -1,9 +1,14 @@
 ﻿# CMakeList.txt: archivo del proyecto de CMake de nivel superior, establezca la configuración global
 # e incluya los subproyectos aquí.
 #
-cmake_minimum_required (VERSION 3.8)
+cmake_minimum_required(VERSION 3.8)
 
-project ("ClusterSKSolver")
+set(CMAKE_CXX_STANDARD 14)
+
+project (ClusterSKSolver)
+
+add_subdirectory(external/spdlog)
+find_package(spdlog)
 
 # Incluya los subproyectos.
-add_subdirectory ("ClusterSKSolver")
+add_subdirectory(ClusterSKSolver)

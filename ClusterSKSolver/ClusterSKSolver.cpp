@@ -29,7 +29,7 @@ int main(int argc, char** argv)
 		spdlog::error("Num. of arguments is incorrect");
 		return 1;
 	}
-	cout << "\n";
+	//cout << "\n";
 
 	
 	
@@ -68,17 +68,19 @@ int main(int argc, char** argv)
 		printState(sudokuArray, rows, cols, regionX, regionY);
 		cout << "\n";
 	}
-	
+	MPI_Barrier(MPI_COMM_WORLD);
+
 	// Ejecuta el algoritmo secuencial
 	spdlog::stopwatch sw;
 	int steps = 0;
-	int isSolved = solveSudoku(stoi(argv[1]), &steps, sudokuArray, rows, cols, regionX, regionY);
-	cout << "\n";
+	int isSolved = solveSudoku(rank, size, stoi(argv[1]), &steps, sudokuArray, rows, cols, regionX, regionY);
+	
 	
 
 
 	if (rank == 0)
 	{
+		cout << "\n";
 		spdlog::info("Found solution? {}", isSolved);
 		spdlog::info("Elapsed time: {:.3}", sw);
 		spdlog::info("Needed steps: {}", steps);
@@ -86,7 +88,7 @@ int main(int argc, char** argv)
 
 		// Imprime el estado final
 		printState(sudokuArray, rows, cols, regionX, regionY);
-		cout << "\n";
+		//cout << "\n";
 		
 	}
 	

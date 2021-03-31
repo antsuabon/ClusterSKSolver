@@ -13,6 +13,6 @@
 #include <mpi.h>
 
 #include "header/SKLoader.h"
-#include "header/SKSolver.h"
+#include "header/CentralSKSolver.h"
 
 int main(int argc, char** argv);

@@ -2,7 +2,10 @@
 #include <iostream>
 
 #include <vector>
+#include <queue>
 #include <mpi.h>
+
+#include <spdlog/spdlog.h>
 
 #include "../header/SKUtils.h"
 

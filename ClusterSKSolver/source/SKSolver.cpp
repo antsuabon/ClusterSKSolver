@@ -32,10 +32,10 @@ int solveSudoku(int heuristic, int* steps, int* state, int rows, int cols, int r
 			{
 				moveForward(state, rows, cols, nextPos.first, nextPos.second, alternative);
 
-				solveSudoku(heuristic, steps, state, rows, cols, regionX, regionY);
-				if (isSolution(state, rows, cols))
+				int isSolved = solveSudoku(heuristic, steps, state, rows, cols, regionX, regionY);
+				if (isSolved == 0)
 				{
-					return 0;
+					return isSolved;
 				}
 
 				moveBackward(state, rows, cols, nextPos.first, nextPos.second);

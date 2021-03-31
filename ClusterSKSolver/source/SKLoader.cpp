@@ -49,7 +49,7 @@ void loadSudoku(string path, int** sudokuArray, int* rows, int* cols, int* regio
 			{
 				vector<string> tokens1 = tokenize(line, "->");
 
-				for each (string var1 in tokens1)
+				for (string &var1: tokens1)
 				{
 					//cout << var1 << endl;
 
@@ -60,7 +60,7 @@ void loadSudoku(string path, int** sudokuArray, int* rows, int* cols, int* regio
 					else
 					{
 						vector<string> tokens2 = tokenize(var1, "|");
-						for each (string var2 in tokens2)
+						for (string &var2: tokens2)
 						{
 
 							
@@ -76,7 +76,7 @@ void loadSudoku(string path, int** sudokuArray, int* rows, int* cols, int* regio
 				vector<string> tokens = tokenize(line, ",");
 
 				
-				for each (string var in tokens)
+				for (string &var: tokens)
 				{
 					row.push_back(stoi(var));
 				}

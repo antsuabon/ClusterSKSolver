@@ -26,7 +26,7 @@ int solveSudoku(int heuristic, int* steps, int* state, int rows, int cols, int r
 			break;
 		}
 
-		for each (int alternative in getAlternatives(rows, cols))
+		for (int &alternative: getAlternatives(rows, cols))
 		{
 			if (isSafe(state, rows, cols, regionX, regionY, nextPos.first, nextPos.second, alternative))
 			{

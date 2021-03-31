@@ -5,22 +5,6 @@
 
 using namespace std;
 
-vector<string> tokenize(string s, string del = " ")
-{
-	vector<string> res;
-
-	int start = 0;
-	int end = s.find(del);
-	while (end != -1) {
-		res.push_back(s.substr(start, end - start));
-		start = end + del.size();
-		end = s.find(del, start);
-	}
-	res.push_back(s.substr(start, end - start));
-
-	return res;
-}
-
 int main(int argc, char** argv)
 {
 	MPI_Init(&argc, &argv);
@@ -39,15 +23,18 @@ int main(int argc, char** argv)
 			spdlog::info("Param. [{}]: {}", i, argv[i]);
 		}
 	}
-	
 
-	if (argc != 2)
+	if (argc != 3)
 	{
 		spdlog::error("Num. of arguments is incorrect");
 		return 1;
 	}
 	cout << "\n";
 
+	
+	
+	
+	/*
 	int initialState[16][16] = {
 		{0,0,10,0,0,0,0,13,0,6,16,0,0,0,1,0},
 		{6,1,0,9,0,0,0,11,0,0,0,0,10,0,0,4},
@@ -66,45 +53,44 @@ int main(int argc, char** argv)
 		{13,0,0,0,4,10,0,0,0,0,2,0,0,5,3,8},
 		{0,0,0,0,7,0,0,0,3,16,13,0,1,0,2,0}
 	};
+	*/
+	
+	int rows, cols, regionX, regionY;
+	int* sudokuArray;
+
+	loadSudoku(argv[2], &sudokuArray, &rows, &cols, &regionX, &regionY);
 
 	
-	int rows = 16, cols = 16;
-
-	// Copiado del array
-
-	int* sudokuArray = new int[rows * cols];
-	for (size_t i = 0; i < rows; i++)
-	{
-		for (size_t j = 0; j < cols; j++)
-		{
-			sudokuArray[i * cols + j] = initialState[i][j];
-		}
-	}
-
 	
 	if (rank == 0)
 	{
 		// Imprime el estado inicial
-		printState(sudokuArray, rows, cols);
+		printState(sudokuArray, rows, cols, regionX, regionY);
 		cout << "\n";
 	}
-
+	
 	// Ejecuta el algoritmo secuencial
 	spdlog::stopwatch sw;
 	int steps = 0;
-	int isSolved = solveSudoku(stoi(argv[1]), &steps, sudokuArray, rows, cols, 4, 4);
+	int isSolved = solveSudoku(stoi(argv[1]), &steps, sudokuArray, rows, cols, regionX, regionY);
 	cout << "\n";
 	
+
+
 	if (rank == 0)
 	{
-		// Imprime el estado final
-		printState(sudokuArray, rows, cols);
-		cout << "\n";
-
 		spdlog::info("Found solution? {}", isSolved);
 		spdlog::info("Elapsed time: {:.3}", sw);
 		spdlog::info("Needed steps: {}", steps);
+		cout << "\n";
+
+		// Imprime el estado final
+		printState(sudokuArray, rows, cols, regionX, regionY);
+		cout << "\n";
+		
 	}
+	
+	
 
 	MPI_Finalize();
 	

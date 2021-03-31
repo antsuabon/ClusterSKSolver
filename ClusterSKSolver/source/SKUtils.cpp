@@ -191,16 +191,50 @@ pair<int, int> findNextZeroByBenefit(int* state, int regionX, int regionY, int r
 }
 
 
-void printState(int* state, int rows, int cols)
+void printState(int* state, int rows, int cols, int regionX, int regionY)
 {
 	for (size_t i = 0; i < rows; i++)
 	{
-		std::string row = "\t";
+		
+		ostringstream oss;
+		oss << internal << setfill('-') << setw(regionX * 2 + regionX) << "";
+
+		string separator = "";
+		for (size_t i = 0; i < cols / regionX; i++)
+		{
+			if (i != 0 && i != cols-1)
+			{
+				separator += oss.str() + "- ";
+			}
+			else
+			{
+				separator += oss.str() + " ";
+			}
+			
+		}
+
+		string row = "\t";
 		for (size_t j = 0; j < cols; j++)
 		{
-			row += to_string(state[i * cols + j]) + " ";
+			ostringstream oss;
+			oss << internal << setfill(' ') << setw(2) << to_string(state[i * cols + j]);
+
+			if (j% regionX == regionX-1 && j != cols-1)
+			{
+				row += oss.str() + " | ";
+			}
+			else
+			{
+				row += oss.str() + " ";
+			}
 		}
 
 		spdlog::info(row);
+
+		if (i % regionY == regionY-1 && i != rows - 1)
+		{
+			
+			spdlog::info("\t{}", separator);
+		}
 	}
 }

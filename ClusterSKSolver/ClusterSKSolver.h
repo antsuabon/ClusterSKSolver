@@ -12,6 +12,7 @@
 #include <spdlog/stopwatch.h>
 #include <mpi.h>
 
+#include "header/SKLoader.h"
 #include "header/SKSolver.h"
 
 int main(int argc, char** argv);

@@ -117,14 +117,17 @@ int master(int heuristic, int rank, int size, int maxDepth, int* state, int rows
 	}
 
 	int isSolved = 1;
+	int answer = 1;
 	MPI_Status status;
 	while (!taskPook.empty() && isSolved != 0)
 	{
-		MPI_Recv(&isSolved, 1, MPI_INT, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, &status);
-		if (isSolved == 0)
+		MPI_Recv(&answer, 1, MPI_INT, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, &status);
+		if (answer == 0)
 		{
 			MPI_Recv(state, rows * cols, MPI_INT, status.MPI_SOURCE, 0, MPI_COMM_WORLD, &status);
 			spdlog::info("Master -> Slave {} found a solution!", status.MPI_SOURCE);
+
+			isSolved = answer;
 		}
 
 		MPI_Send(&isSolved, 1, MPI_INT, status.MPI_SOURCE, 0, MPI_COMM_WORLD);
@@ -146,11 +149,13 @@ int master(int heuristic, int rank, int size, int maxDepth, int* state, int rows
 
 	while (activeWorkers > 0)
 	{
-		MPI_Recv(&isSolved, 1, MPI_INT, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, &status);
-		if (isSolved == 0)
+		MPI_Recv(&answer, 1, MPI_INT, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, &status);
+		if (answer == 0)
 		{
 			MPI_Recv(state, rows * cols, MPI_INT, status.MPI_SOURCE, 0, MPI_COMM_WORLD, &status);
 			spdlog::info("Master -> Slave {} found a solution!", status.MPI_SOURCE);
+
+			isSolved = answer;
 		}
 
 		int stop = 0;

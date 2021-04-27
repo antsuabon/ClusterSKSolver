@@ -10,9 +10,11 @@
 
 #include <spdlog/spdlog.h>
 #include <spdlog/stopwatch.h>
+#include <spdlog/sinks/basic_file_sink.h>
+
 #include <mpi.h>
 
 #include "header/SKLoader.h"
-#include "header/CentralSKSolver.h"
+#include "header/DistributedSKSolver.h"
 
 int main(int argc, char** argv);

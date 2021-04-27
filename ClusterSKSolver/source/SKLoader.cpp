@@ -8,7 +8,8 @@ vector<string> tokenize(string s, string del = " ")
 
 	int start = 0;
 	int end = s.find(del);
-	while (end != -1) {
+	while (end != -1)
+	{
 		res.push_back(s.substr(start, end - start));
 		start = end + del.size();
 		end = s.find(del, start);
@@ -18,13 +19,14 @@ vector<string> tokenize(string s, string del = " ")
 	return res;
 }
 
-void loadSudoku(string path, int** sudokuArray, int* rows, int* cols, int* regionX, int* regionY) 
+void loadSudoku(string path, int **sudokuArray, map<vector<pair<int, int>>, int> *blocks, int *rows, int *cols, int *regionX, int *regionY)
 {
-	
+
 	ifstream infile(path);
 	string line;
 	string state = "";
 	vector<vector<int>> initialState;
+
 	while (std::getline(infile, line))
 	{
 		if (!line.empty())
@@ -43,40 +45,28 @@ void loadSudoku(string path, int** sudokuArray, int* rows, int* cols, int* regio
 
 				(*regionX) = stoi(tokens[0]);
 				(*regionY) = stoi(tokens[1]);
-	
 			}
 			else if (state == "b")
 			{
 				vector<string> tokens1 = tokenize(line, "->");
 
-				for (string &var1: tokens1)
+				vector<pair<int, int>> positions;
+
+				vector<string> tokens2 = tokenize(tokens1[0], "|");
+				for (string &var2 : tokens2)
 				{
-					//cout << var1 << endl;
-
-					if (var1.find("|") == string::npos)
-					{
-						
-					}
-					else
-					{
-						vector<string> tokens2 = tokenize(var1, "|");
-						for (string &var2: tokens2)
-						{
-
-							
-						}
-					}
-
+					vector<string> tokens3 = tokenize(var2, ",");
+					positions.push_back({stoi(tokens3[0]), stoi(tokens3[1])});
 				}
 
+				blocks->insert({positions, stoi(tokens1[1])});
 			}
 			else
 			{
 				vector<int> row;
 				vector<string> tokens = tokenize(line, ",");
 
-				
-				for (string &var: tokens)
+				for (string &var : tokens)
 				{
 					row.push_back(stoi(var));
 				}

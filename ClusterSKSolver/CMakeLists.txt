@@ -11,6 +11,7 @@ set(CLUSTER_SK_SOLVER_SOURCES
   "ClusterSKSolver.cpp"
   "source/SKSolver.cpp"
   "source/CentralSKSolver.cpp"
+  "source/DistributedSKSolver.cpp"
   "source/SKUtils.cpp"
   "source/SKLoader.cpp")
 

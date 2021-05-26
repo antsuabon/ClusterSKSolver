@@ -4,8 +4,10 @@
 #include <vector>
 #include <queue>
 #include <mpi.h>
+#include <memory>
 
 #include <spdlog/spdlog.h>
+#include <spdlog/stopwatch.h>
 
 #include "../header/SKUtils.h"
 
@@ -23,5 +25,5 @@ namespace DistributedSKSolver
     const int DONE_TAG = 4;
     const int END_TAG = 5;
 
-    int solveSudoku(int rank, int size, int heuristic, int* steps, int* state, int rows, int cols, int regionX, int regionY);
+    int solveSudoku(int rank, int size, int heuristic, double initialMaxDepth, int *steps, int *state, int rows, int cols, int regionX, int regionY, std::map<std::vector<std::pair<int, int>>, int> blocks, spdlog::stopwatch sw, std::shared_ptr<spdlog::logger> logger);
 }

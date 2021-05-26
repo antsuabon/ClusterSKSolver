@@ -4,13 +4,20 @@ using namespace std;
 
 namespace CentralSKSolver
 {
-	int solveFullSudoku(int heuristic, int* steps, int* state, int rows, int cols, int regionX, int regionY)
+	int solveFullSudoku(int heuristic, int *steps, int *depth, int *state, int rows, int cols, int regionX, int regionY, map<vector<pair<int, int>>, int> blocks, spdlog::stopwatch stopwatch, shared_ptr<spdlog::logger> logger)
 	{
 		(*steps)++;
 
-		if (isSolution(state, rows, cols))
+		bool isSolved = isSolution(state, rows, cols);
+
+		if (logger != nullptr)
 		{
-			return 0;
+			logger->info("{}\t{}\t{}\t{:.4}\t{}", 0, *steps, *depth, stopwatch, isSolved);
+		}
+
+		if (isSolved)
+		{
+			return 1;
 		}
 		else
 		{
@@ -22,20 +29,26 @@ namespace CentralSKSolver
 				nextPos = findNextZero(state, rows, cols);
 				break;
 			case HEURISTIC1:
-				nextPos = findNextZeroByBenefit(state, regionX, regionY, rows, cols);
+				nextPos = findNextZeroByBenefit(state, regionX, regionY, rows, cols, blocks);
+				break;
+			case HEURISTIC2:
+				nextPos = findNextZeroBySum(state, regionX, regionY, rows, cols, blocks);
+				break;
+			case HEURISTIC3:
+				nextPos = findNextZeroBy45Rule(state, regionX, regionY, rows, cols, blocks);
 				break;
 			default:
 				break;
 			}
 
-			for (int &alternative: getAlternatives(rows, cols))
+			for (int &alternative : getAlternatives(rows, cols))
 			{
-				if (isSafe(state, rows, cols, regionX, regionY, nextPos.first, nextPos.second, alternative))
+				if (isSafe(state, rows, cols, regionX, regionY, blocks, nextPos.first, nextPos.second, alternative))
 				{
 					moveForward(state, rows, cols, nextPos.first, nextPos.second, alternative);
 
-					int isSolved = solveFullSudoku(heuristic, steps, state, rows, cols, regionX, regionY);
-					if (isSolved == 0)
+					int isSolved = solveFullSudoku(heuristic, steps, depth, state, rows, cols, regionX, regionY, blocks, stopwatch, logger);
+					if (isSolved == 1)
 					{
 						return isSolved;
 					}
@@ -45,21 +58,28 @@ namespace CentralSKSolver
 			}
 		}
 
-		return 1;
+		return 0;
 	}
 
-	int solveMaxDepthSudoku(queue<int*> &pool, int depth, int maxDepth, int heuristic, int* steps, int* state, int rows, int cols, int regionX, int regionY)
+	int solveMaxDepthSudoku(queue<int *> &pool, int depth, int maxDepth, int heuristic, int *steps, int *state, int rows, int cols, int regionX, int regionY, map<vector<pair<int, int>>, int> blocks, spdlog::stopwatch stopwatch, shared_ptr<spdlog::logger> logger)
 	{
 		(*steps)++;
 
-		if (isSolution(state, rows, cols))
+		bool isSolved = isSolution(state, rows, cols);
+
+		if (logger != nullptr)
 		{
-			return 0;
+			logger->info("{}\t{}\t{}\t{:.4}\t{}", 0, *steps, depth, stopwatch, isSolved);
+		}
+
+		if (isSolved)
+		{
+			return 1;
 		}
 		else if (depth >= maxDepth)
 		{
-			int* stateToSave = new int[rows * cols];
-			copy(state, state + (rows*cols), stateToSave);
+			int *stateToSave = new int[rows * cols];
+			copy(state, state + (rows * cols), stateToSave);
 			pool.push(stateToSave);
 		}
 		else
@@ -72,20 +92,26 @@ namespace CentralSKSolver
 				nextPos = findNextZero(state, rows, cols);
 				break;
 			case HEURISTIC1:
-				nextPos = findNextZeroByBenefit(state, regionX, regionY, rows, cols);
+				nextPos = findNextZeroByBenefit(state, regionX, regionY, rows, cols, blocks);
+				break;
+			case HEURISTIC2:
+				nextPos = findNextZeroBySum(state, regionX, regionY, rows, cols, blocks);
+				break;
+			case HEURISTIC3:
+				nextPos = findNextZeroBy45Rule(state, regionX, regionY, rows, cols, blocks);
 				break;
 			default:
 				break;
 			}
 
-			for (int &alternative: getAlternatives(rows, cols))
+			for (int &alternative : getAlternatives(rows, cols))
 			{
-				if (isSafe(state, rows, cols, regionX, regionY, nextPos.first, nextPos.second, alternative))
+				if (isSafe(state, rows, cols, regionX, regionY, blocks, nextPos.first, nextPos.second, alternative))
 				{
 					moveForward(state, rows, cols, nextPos.first, nextPos.second, alternative);
 
-					int isSolved = solveMaxDepthSudoku(pool, depth + 1, maxDepth, heuristic, steps, state, rows, cols, regionX, regionY);
-					if (isSolved == 0)
+					int isSolved = solveMaxDepthSudoku(pool, depth + 1, maxDepth, heuristic, steps, state, rows, cols, regionX, regionY, blocks, stopwatch, logger);
+					if (isSolved == 1)
 					{
 						return isSolved;
 					}
@@ -95,105 +121,115 @@ namespace CentralSKSolver
 			}
 		}
 
-		return 1;
+		return 0;
 	}
 
-	int master(int heuristic, int rank, int size, int maxDepth, int* state, int rows, int cols, int regionX, int regionY)
+	// ####################################################################################################################################################
+	// ####################################################################################################################################################
+
+	// ####################################################################################################################################################
+	// ####################################################################################################################################################
+
+	int master(int heuristic, int rank, int size, int maxDepth, int *state, int rows, int cols, int regionX, int regionY, map<vector<pair<int, int>>, int> blocks, spdlog::stopwatch stopwatch, shared_ptr<spdlog::logger> logger)
 	{
-		queue<int*> taskPook;
+		queue<int *> taskPool;
 
 		int steps = 0;
-		solveMaxDepthSudoku(taskPook, 0, maxDepth, heuristic, &steps, state, rows, cols, regionX, regionY);
+		solveMaxDepthSudoku(taskPool, 0, maxDepth, heuristic, &steps, state, rows, cols, regionX, regionY, blocks, stopwatch, logger);
 
 		spdlog::info("------------- Starting master -------------");
 
-		spdlog::info("Master -> {} tasks left!", taskPook.size());
+		spdlog::info("Master -> {} tasks left!", taskPool.size());
 
 		int activeWorkers;
 		for (activeWorkers = 0; activeWorkers < size - 1; activeWorkers++)
 		{
-			int* stateToSend = taskPook.front();
+			int *stateToSend = taskPool.front();
 			MPI_Send(stateToSend, rows * cols, MPI_INT, activeWorkers + 1, 0, MPI_COMM_WORLD);
 			delete stateToSend;
-			taskPook.pop();
+			taskPool.pop();
 		}
 
-		int isSolved = 1;
+		int isSolved = 0;
 		int answer = 1;
 		MPI_Status status;
-		while (!taskPook.empty() && isSolved != 0)
+
+		while (!taskPool.empty() && isSolved != 1)
 		{
+
 			MPI_Recv(&answer, 1, MPI_INT, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, &status);
-			if (answer == 0)
+			if (answer == 1)
 			{
 				MPI_Recv(state, rows * cols, MPI_INT, status.MPI_SOURCE, 0, MPI_COMM_WORLD, &status);
 				spdlog::info("Master -> Slave {} found a solution!", status.MPI_SOURCE);
-
 				isSolved = answer;
 			}
 
 			MPI_Send(&isSolved, 1, MPI_INT, status.MPI_SOURCE, 0, MPI_COMM_WORLD);
-			if (isSolved != 0)
+			if (isSolved != 1)
 			{
-				int* stateToSend = taskPook.front();
+				int *stateToSend = taskPool.front();
 				MPI_Send(stateToSend, rows * cols, MPI_INT, status.MPI_SOURCE, 0, MPI_COMM_WORLD);
 				delete stateToSend;
-				taskPook.pop();
+				taskPool.pop();
 			}
 			else
 			{
 				activeWorkers--;
 			}
-			
 
-			spdlog::info("Master -> {} tasks left!", taskPook.size());
+			spdlog::info("Master -> {} tasks left!", taskPool.size());
 		}
 
 		while (activeWorkers > 0)
 		{
+
 			MPI_Recv(&answer, 1, MPI_INT, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, &status);
-			if (answer == 0)
+			if (answer == 1)
 			{
+
 				MPI_Recv(state, rows * cols, MPI_INT, status.MPI_SOURCE, 0, MPI_COMM_WORLD, &status);
 				spdlog::info("Master -> Slave {} found a solution!", status.MPI_SOURCE);
 
 				isSolved = answer;
 			}
 
-			int stop = 0;
+			int stop = 1;
 			MPI_Send(&stop, 1, MPI_INT, status.MPI_SOURCE, 0, MPI_COMM_WORLD);
 			activeWorkers--;
 		}
-		
+
 		spdlog::info("------------- Finishing master -------------");
 
 		return isSolved;
 	}
 
-	void slave(int heuristic, int rank, int size, int rows, int cols, int regionX, int regionY)
+	void slave(int heuristic, int rank, int size, int rows, int cols, int regionX, int regionY, map<vector<pair<int, int>>, int> blocks, spdlog::stopwatch stopwatch, shared_ptr<spdlog::logger> logger)
 	{
-		int* state = new int[rows * cols];
+		int *state = new int[rows * cols];
 
 		spdlog::info("------------- Starting slave {} -------------", rank);
 
-		int isSolved = 1;
+		int isSolved = 0;
 		MPI_Status status;
-		while(isSolved != 0)
+		while (isSolved != 1)
 		{
 			MPI_Recv(state, rows * cols, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
 			spdlog::info("Slave {} -> Received task!", rank);
 
 			int steps = 0;
-			isSolved = solveFullSudoku(heuristic, &steps, state, rows, cols, regionX, regionY);
+			int depth = 0;
+			isSolved = solveFullSudoku(heuristic, &steps, &depth, state, rows, cols, regionX, regionY, blocks, stopwatch, logger);
 
 			MPI_Send(&isSolved, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
-			if (isSolved == 0)
+
+			if (isSolved == 1)
 			{
 				spdlog::info("Slave {} -> Found solution!", rank);
 				MPI_Send(state, rows * cols, MPI_INT, 0, 0, MPI_COMM_WORLD);
 			}
 
-			MPI_Recv(&isSolved, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);	
+			MPI_Recv(&isSolved, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
 		}
 
 		spdlog::info("------------- Finishing slave {} -------------", rank);
@@ -201,19 +237,29 @@ namespace CentralSKSolver
 		delete state;
 	}
 
-	int solveSudoku(int rank, int size, int heuristic, int* steps, int* state, int rows, int cols, int regionX, int regionY)
+	// ####################################################################################################################################################
+
+	/**
+	 * 
+	 */
+	int solveSudoku(int rank, int size, int heuristic, double initialMaxDepth, int *steps, int *state, int rows, int cols, int regionX, int regionY, map<vector<pair<int, int>>, int> blocks, spdlog::stopwatch stopwatch, shared_ptr<spdlog::logger> logger)
 	{
+		int isSolved = 0;
+
 		if (rank == 0)
 		{
-			int isSolved = master(heuristic, rank, size, 5, state, rows, cols, regionX, regionY);
+			int maxDepth = (int)ceil(initialMaxDepth * countZeros(state, rows, cols));
+
+			spdlog::info("Max. depth: {}", maxDepth);
+			isSolved = master(heuristic, rank, size, maxDepth, state, rows, cols, regionX, regionY, blocks, stopwatch, logger);
 
 			return isSolved;
 		}
 		else
 		{
-			slave(heuristic, rank, size, rows, cols, regionX, regionY);
+			slave(heuristic, rank, size, rows, cols, regionX, regionY, blocks, stopwatch, logger);
 		}
 
-		return 1;
+		return isSolved;
 	}
 }

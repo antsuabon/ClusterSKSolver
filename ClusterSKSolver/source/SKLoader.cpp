@@ -56,7 +56,7 @@ void loadSudoku(string path, int **sudokuArray, map<vector<pair<int, int>>, int>
 				for (string &var2 : tokens2)
 				{
 					vector<string> tokens3 = tokenize(var2, ",");
-					positions.push_back({stoi(tokens3[0]), stoi(tokens3[1])});
+					positions.push_back({stoi(tokens3[1]), stoi(tokens3[0])});
 				}
 
 				blocks->insert({positions, stoi(tokens1[1])});

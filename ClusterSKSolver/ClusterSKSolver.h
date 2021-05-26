@@ -15,6 +15,8 @@
 #include <mpi.h>
 
 #include "header/SKLoader.h"
+#include "header/SKSolver.h"
+#include "header/CentralSKSolver.h"
 #include "header/DistributedSKSolver.h"
 
-int main(int argc, char** argv);
+int main(int argc, char **argv);

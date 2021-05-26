@@ -24,7 +24,7 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (argc != 3)
+	if (argc < 3)
 	{
 		spdlog::error("Num. of arguments is incorrect");
 		return 1;
@@ -35,12 +35,12 @@ int main(int argc, char **argv)
 	map<vector<pair<int, int>>, int> blocks;
 	int *sudokuArray;
 
-	loadSudoku(argv[2], &sudokuArray, &blocks, &rows, &cols, &regionX, &regionY);
+	loadSudoku(argv[4], &sudokuArray, &blocks, &rows, &cols, &regionX, &regionY);
 
-	//auto logger = spdlog::basic_logger_mt("basic_logger", "logs/example.log");
-	//logger->set_pattern("%v");
-	//logger->set_level(spdlog::level::off);
-	/*
+	auto logger = spdlog::basic_logger_mt("basic_logger", "logs/log-" + to_string(rank) + ".log");
+	logger->set_pattern("%v");
+	//logger->set_level(spdlog::level::);
+
 	if (rank == 0)
 	{
 		// Imprime el estado inicial
@@ -49,14 +49,33 @@ int main(int argc, char **argv)
 	}
 	MPI_Barrier(MPI_COMM_WORLD);
 
-	// Ejecuta el algoritmo secuencial
 	spdlog::stopwatch sw;
 	int steps = 0;
-	int isSolved = DistributedSKSolver::solveSudoku(rank, size, stoi(argv[1]), &steps, sudokuArray, rows, cols, regionX, regionY);
+	int depth = 0;
+	int isSolved = 1;
 
-	// SKSolver::solveSudoku(stoi(argv[1]), &steps, sudokuArray, rows,cols, regionX, regionY);
+	// Selección del algoritmo utilizando el parámetro de entrada
+	switch (stoi(argv[1]))
+	{
+	case 0:
+		// Ejecución secuencial del algoritmo
+		isSolved = SKSolver::solveSudoku(stoi(argv[2]), &steps, &depth, sudokuArray, rows, cols, regionX, regionY, blocks, sw, nullptr);
+		break;
 
-	// DistributedSKSolver::solveSudoku(rank, size, stoi(argv[1]), &steps, sudokuArray, rows, cols, regionX, regionY);
+	case 1:
+		// Ejecución secuencial del algoritmo con distribución estática de trabajos
+		isSolved = CentralSKSolver::solveSudoku(rank, size, stoi(argv[2]), stod(argv[3]), &steps, sudokuArray, rows, cols, regionX, regionY, blocks, sw, nullptr);
+		break;
+
+	case 2:
+		// Ejecución secuencial del algoritmo con distribución dinámica de trabajos
+		isSolved = DistributedSKSolver::solveSudoku(rank, size, stoi(argv[2]), stod(argv[3]), &steps, sudokuArray, rows, cols, regionX, regionY, blocks, sw, nullptr);
+		break;
+
+	default:
+		spdlog::error("Not existing algorithm");
+		return 1;
+	}
 
 	MPI_Barrier(MPI_COMM_WORLD);
 	if (rank == 0)
@@ -72,7 +91,6 @@ int main(int argc, char **argv)
 		//cout << "\n";
 	}
 
-	*/
 	MPI_Finalize();
 
 	return 0;

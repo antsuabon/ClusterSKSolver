@@ -1,4 +1,4 @@
-﻿# CMakeList.txt: proyecto de CMake para ClusterSKSolver, incluya el origen y defina
+# CMakeList.txt: proyecto de CMake para ClusterSKSolver, incluya el origen y defina
 # la lógica específica del proyecto aquí.
 #
 cmake_minimum_required(VERSION 3.8)

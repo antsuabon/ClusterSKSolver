@@ -152,7 +152,7 @@ bool checkBlock(int *state, int rows, int cols, int regionX, int regionY, map<ve
 
 	for (auto &item : blocks)
 	{
-		if (find(item.first.begin(), item.first.end(), pair(newI, newJ)) != item.first.end())
+		if (find(item.first.begin(), item.first.end(), pair<int, int>(newI, newJ)) != item.first.end())
 		{
 			int sum = 0;
 			for (auto &pos : item.first)
@@ -173,7 +173,7 @@ int countBlockCompletedCells(int *state, int rows, int cols, int regionX, int re
 
 	for (auto &item : blocks)
 	{
-		if (find(item.first.begin(), item.first.end(), pair(newI, newJ)) != item.first.end())
+		if (find(item.first.begin(), item.first.end(), pair<int, int>(newI, newJ)) != item.first.end())
 		{
 			int sum = 0;
 			for (auto &pos : item.first)

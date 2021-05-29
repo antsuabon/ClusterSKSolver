@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <spdlog/spdlog.h>
 #include <limits>
+#include <sstream>
 
 std::pair<int, int> findNextZero(int *state, int rows, int cols);
 std::pair<int, int> findNextZeroByBenefit(int *state, int regionX, int regionY, int rows, int cols, std::map<std::vector<std::pair<int, int>>, int> blocks);

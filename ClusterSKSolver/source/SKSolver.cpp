@@ -12,7 +12,7 @@ namespace SKSolver
 
 		if (logger != nullptr)
 		{
-			logger->info("{}\t{}\t{}\t{:.4}\t{}", 0, *steps, *depth, stopwatch, isSolved);
+			logger->info("{}\t{}\t{}\t{:.4}\t{}\t{}", 0, *steps, *depth, stopwatch, isSolved, printStateLog(state, rows, cols));
 		}
 
 		if (isSolved)

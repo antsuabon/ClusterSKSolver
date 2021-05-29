@@ -388,3 +388,19 @@ void printState(int *state, int rows, int cols, int regionX, int regionY)
 		}
 	}
 }
+
+string printStateLog(int *state, int rows, int cols)
+{
+	string res = "";
+	int n = rows * cols;
+	for (size_t i = 0; i < n; i++)
+	{
+		res += to_string(state[i]);
+		if (i != n - 1)
+		{
+			res += ",";
+		}
+	}
+
+	return res;
+}

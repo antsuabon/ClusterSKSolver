@@ -23,3 +23,4 @@ void moveBackward(int *state, int rows, int cols, int newI, int newJ);
 
 int countZeros(int *state, int rows, int cols);
 void printState(int *state, int rows, int cols, int regionX, int regionY);
+std::string printStateLog(int *state, int rows, int cols);

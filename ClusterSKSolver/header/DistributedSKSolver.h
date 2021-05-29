@@ -2,7 +2,7 @@
 #include <iostream>
 
 #include <vector>
-#include <queue>
+#include <stack>
 #include <mpi.h>
 #include <memory>
 

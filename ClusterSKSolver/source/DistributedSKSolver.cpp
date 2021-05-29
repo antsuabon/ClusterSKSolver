@@ -4,7 +4,7 @@ using namespace std;
 
 namespace DistributedSKSolver
 {
-    int solveMaxDepthSudoku(queue<int *> &pool, int depth, int maxDepth, int heuristic, int *steps, int *state, int rows, int cols, int regionX, int regionY, map<vector<pair<int, int>>, int> blocks, spdlog::stopwatch stopwatch, shared_ptr<spdlog::logger> logger)
+    int solveMaxDepthSudoku(stack<int *> &pool, int depth, int maxDepth, int heuristic, int *steps, int *state, int rows, int cols, int regionX, int regionY, map<vector<pair<int, int>>, int> blocks, spdlog::stopwatch stopwatch, shared_ptr<spdlog::logger> logger)
     {
         (*steps)++;
 
@@ -167,7 +167,7 @@ namespace DistributedSKSolver
         spdlog::info("------------- Starting slave {} -------------", rank);
 
         int *state = new int[rows * cols];
-        queue<int *> pool;
+        stack<int *> pool;
         int steps;
         int isSolved = 0;
         int neededSlaves;
@@ -195,7 +195,7 @@ namespace DistributedSKSolver
 
                 while (!pool.empty() && isSolved != 1)
                 {
-                    int *state = pool.front();
+                    int *state = pool.top();
                     pool.pop();
                     isSolved = solveMaxDepthSudoku(pool, 0, maxDepth, heuristic, &steps, state, rows, cols, regionX, regionY, blocks, stopwatch, logger);
 
@@ -219,7 +219,7 @@ namespace DistributedSKSolver
 
                         for (size_t i = 0; i < grantedSlaves; i++)
                         {
-                            int *stateToSend = pool.front();
+                            int *stateToSend = pool.top();
                             MPI_Send(&tmp, 1, MPI_INT, slaves[i], PBM_TAG, MPI_COMM_WORLD);
                             MPI_Send(stateToSend, rows * cols, MPI_INT, slaves[i], PBM_TAG, MPI_COMM_WORLD);
                             delete stateToSend;

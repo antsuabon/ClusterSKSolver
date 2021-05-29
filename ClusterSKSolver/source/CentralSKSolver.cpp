@@ -211,13 +211,14 @@ namespace CentralSKSolver
 		spdlog::info("------------- Starting slave {} -------------", rank);
 
 		int isSolved = 0;
+		int steps = 0;
+
 		MPI_Status status;
 		while (isSolved != 1)
 		{
 			MPI_Recv(state, rows * cols, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
 			spdlog::info("Slave {} -> Received task!", rank);
 
-			int steps = 0;
 			int depth = 0;
 			isSolved = solveFullSudoku(heuristic, &steps, &depth, state, rows, cols, regionX, regionY, blocks, stopwatch, logger);
 

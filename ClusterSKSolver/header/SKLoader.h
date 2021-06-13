@@ -8,4 +8,4 @@
 #include <utility>
 #include <fstream>
 
-void loadSudoku(std::string path, int **sudokuArray, std::map<std::vector<std::pair<int, int>>, int> *blocks, int *rows, int *cols, int *regionX, int *regionY);
+void loadSudoku(std::string path, int **sudokuArray, std::map<std::vector<std::pair<int, int>>, int> *blocks, int *n, int *regionX, int *regionY);

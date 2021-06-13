@@ -24,27 +24,65 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (argc < 3)
+	if (argc < 6)
 	{
 		spdlog::error("Num. of arguments is incorrect");
 		return 1;
 	}
-	//cout << "\n";
 
-	int rows, cols, regionX, regionY;
+	int algorithm = stoi(argv[2]);
+	int heuristic = stoi(argv[3]);
+	double initialMaxDepth = stod(argv[4]);
+
+	if (algorithm < 0 || algorithm > 2)
+	{
+		if (rank == 0)
+			spdlog::error("Not existing algorithm");
+
+		return 1;
+	}
+
+	if (heuristic < 0 || heuristic > 3)
+	{
+		if (rank == 0)
+			spdlog::error("Not existing heuristic");
+		return 1;
+	}
+
+	if (initialMaxDepth < 0 || initialMaxDepth > 1)
+	{
+		if (rank == 0)
+			spdlog::error("Invalid initial max depth");
+		return 1;
+	}
+
+	if (algorithm > 0 && size == 1)
+	{
+		if (rank == 0)
+			spdlog::error("Invalid number of slave nodes");
+		return 1;
+	}
+
+	shared_ptr<spdlog::logger> logger = nullptr;
+
+	if (stoi(argv[5]) > 0)
+	{
+		// Ficheros de log para la resolución paso a paso
+		logger = spdlog::basic_logger_mt("basic_logger", "logs/log-" + to_string(rank) + ".log");
+		logger->set_pattern("%v");
+	}
+
+	// Representación del problema
+	int n, regionX, regionY;
 	map<vector<pair<int, int>>, int> blocks;
 	int *sudokuArray;
 
-	loadSudoku(argv[4], &sudokuArray, &blocks, &rows, &cols, &regionX, &regionY);
-
-	auto logger = spdlog::basic_logger_mt("basic_logger", "logs/log-" + to_string(rank) + ".log");
-	logger->set_pattern("%v");
-	//logger->set_level(spdlog::level::);
+	loadSudoku(argv[1], &sudokuArray, &blocks, &n, &regionX, &regionY);
 
 	if (rank == 0)
 	{
 		// Imprime el estado inicial
-		printState(sudokuArray, rows, cols, regionX, regionY);
+		printState(sudokuArray, n, regionX, regionY);
 		cout << "\n";
 	}
 	MPI_Barrier(MPI_COMM_WORLD);
@@ -55,25 +93,24 @@ int main(int argc, char **argv)
 	int isSolved = 1;
 
 	// Selección del algoritmo utilizando el parámetro de entrada
-	switch (stoi(argv[1]))
+	switch (algorithm)
 	{
 	case 0:
 		// Ejecución secuencial del algoritmo
-		isSolved = SKSolver::solveSudoku(stoi(argv[2]), &steps, &depth, sudokuArray, rows, cols, regionX, regionY, blocks, sw, nullptr);
+		isSolved = SKSolver::solveSudoku(heuristic, &steps, &depth, sudokuArray, n, regionX, regionY, blocks, sw, logger);
 		break;
 
 	case 1:
 		// Ejecución secuencial del algoritmo con distribución estática de trabajos
-		isSolved = CentralSKSolver::solveSudoku(rank, size, stoi(argv[2]), stod(argv[3]), &steps, sudokuArray, rows, cols, regionX, regionY, blocks, sw, nullptr);
+		isSolved = CentralSKSolver::solveSudoku(rank, size, heuristic, initialMaxDepth, &steps, sudokuArray, n, regionX, regionY, blocks, sw, logger);
 		break;
 
 	case 2:
 		// Ejecución secuencial del algoritmo con distribución dinámica de trabajos
-		isSolved = DistributedSKSolver::solveSudoku(rank, size, stoi(argv[2]), stod(argv[3]), &steps, sudokuArray, rows, cols, regionX, regionY, blocks, sw, nullptr);
+		isSolved = DistributedSKSolver::solveSudoku(rank, size, heuristic, initialMaxDepth, &steps, sudokuArray, n, regionX, regionY, blocks, sw, logger);
 		break;
 
 	default:
-		spdlog::error("Not existing algorithm");
 		return 1;
 	}
 
@@ -87,7 +124,7 @@ int main(int argc, char **argv)
 		cout << "\n";
 
 		// Imprime el estado final
-		printState(sudokuArray, rows, cols, regionX, regionY);
+		printState(sudokuArray, n, regionX, regionY);
 		//cout << "\n";
 	}
 

@@ -9,19 +9,25 @@
 #include <limits>
 #include <sstream>
 
-std::pair<int, int> findNextZero(int *state, int rows, int cols);
-std::pair<int, int> findNextZeroByBenefit(int *state, int regionX, int regionY, int rows, int cols, std::map<std::vector<std::pair<int, int>>, int> blocks);
-std::pair<int, int> findNextZeroBySum(int *state, int regionX, int regionY, int rows, int cols, std::map<std::vector<std::pair<int, int>>, int> blocks);
-std::pair<int, int> findNextZeroBy45Rule(int *state, int regionX, int regionY, int rows, int cols, std::map<std::vector<std::pair<int, int>>, int> blocks);
+const int NORMAL = 0;
+const int HEURISTIC1 = 1;
+const int HEURISTIC2 = 2;
+const int HEURISTIC3 = 3;
 
-std::vector<int> getAlternatives(int rows, int cols);
+std::pair<int, int> findNextZero(int *state, int n);
+std::pair<int, int> findNextZeroByBenefit(int *state, int regionX, int regionY, int n, std::map<std::vector<std::pair<int, int>>, int> blocks);
+std::pair<int, int> findNextZeroBySum(int *state, int regionX, int regionY, int n, std::map<std::vector<std::pair<int, int>>, int> blocks);
+std::pair<int, int> findNextZeroBy45Rule(int *state, int regionX, int regionY, int n, std::map<std::vector<std::pair<int, int>>, int> blocks);
+std::pair<int, int> findNextPosition(int heuristic, int *state, int n, int regionX, int regionY, std::map<std::vector<std::pair<int, int>>, int> blocks);
 
-bool isSolution(int *state, int rows, int cols);
-bool isSafe(int *state, int rows, int cols, int regionX, int regionY, std::map<std::vector<std::pair<int, int>>, int> blocks, int newI, int newJ, int alternative);
+std::vector<int> getAlternatives(int n);
 
-void moveForward(int *state, int rows, int cols, int newI, int newJ, int alternative);
-void moveBackward(int *state, int rows, int cols, int newI, int newJ);
+bool isSolution(int *state, int n);
+bool isSafe(int *state, int n, int regionX, int regionY, std::map<std::vector<std::pair<int, int>>, int> blocks, int newI, int newJ, int alternative);
 
-int countZeros(int *state, int rows, int cols);
-void printState(int *state, int rows, int cols, int regionX, int regionY);
-std::string printStateLog(int *state, int rows, int cols);
+void moveForward(int *state, int n, int newI, int newJ, int alternative);
+void moveBackward(int *state, int n, int newI, int newJ);
+
+int countZeros(int *state, int n);
+void printState(int *state, int n, int regionX, int regionY);
+std::string printStateLog(int *state, int n);

@@ -4,15 +4,15 @@ using namespace std;
 
 namespace DistributedSKSolver
 {
-    int solveMaxDepthSudoku(stack<int *> &pool, int depth, int maxDepth, int heuristic, int *steps, int *state, int rows, int cols, int regionX, int regionY, map<vector<pair<int, int>>, int> blocks, spdlog::stopwatch stopwatch, shared_ptr<spdlog::logger> logger)
+    int solveMaxDepthSudoku(stack<int *> &pool, int depth, int maxDepth, int heuristic, int *steps, int *state, int n, int regionX, int regionY, map<vector<pair<int, int>>, int> blocks, spdlog::stopwatch stopwatch, shared_ptr<spdlog::logger> logger)
     {
         (*steps)++;
 
-        bool isSolved = isSolution(state, rows, cols);
+        bool isSolved = isSolution(state, n);
 
         if (logger != nullptr)
         {
-            logger->info("{}\t{}\t{}\t{:.4}\t{}", 0, *steps, depth, stopwatch, isSolved);
+            logger->info("{}\t{}\t{:.4}\t{}\t{}", *steps, depth, stopwatch, isSolved, printStateLog(state, n));
         }
 
         if (isSolved)
@@ -21,8 +21,8 @@ namespace DistributedSKSolver
         }
         else if (depth >= maxDepth)
         {
-            int *stateToSave = new int[rows * cols];
-            copy(state, state + (rows * cols), stateToSave);
+            int *stateToSave = new int[n * n];
+            copy(state, state + (n * n), stateToSave);
             pool.push(stateToSave);
         }
         else
@@ -32,34 +32,34 @@ namespace DistributedSKSolver
             switch (heuristic)
             {
             case NORMAL:
-                nextPos = findNextZero(state, rows, cols);
+                nextPos = findNextZero(state, n);
                 break;
             case HEURISTIC1:
-                nextPos = findNextZeroByBenefit(state, regionX, regionY, rows, cols, blocks);
+                nextPos = findNextZeroByBenefit(state, regionX, regionY, n, blocks);
                 break;
             case HEURISTIC2:
-                nextPos = findNextZeroBySum(state, regionX, regionY, rows, cols, blocks);
+                nextPos = findNextZeroBySum(state, regionX, regionY, n, blocks);
                 break;
             case HEURISTIC3:
-                nextPos = findNextZeroBy45Rule(state, regionX, regionY, rows, cols, blocks);
+                nextPos = findNextZeroBy45Rule(state, regionX, regionY, n, blocks);
                 break;
             default:
                 break;
             }
 
-            for (int &alternative : getAlternatives(rows, cols))
+            for (int &alternative : getAlternatives(n))
             {
-                if (isSafe(state, rows, cols, regionX, regionY, blocks, nextPos.first, nextPos.second, alternative))
+                if (isSafe(state, n, regionX, regionY, blocks, nextPos.first, nextPos.second, alternative))
                 {
-                    moveForward(state, rows, cols, nextPos.first, nextPos.second, alternative);
+                    moveForward(state, n, nextPos.first, nextPos.second, alternative);
 
-                    int isSolved = solveMaxDepthSudoku(pool, depth + 1, maxDepth, heuristic, steps, state, rows, cols, regionX, regionY, blocks, stopwatch, logger);
+                    int isSolved = solveMaxDepthSudoku(pool, depth + 1, maxDepth, heuristic, steps, state, n, regionX, regionY, blocks, stopwatch, logger);
                     if (isSolved == 1)
                     {
                         return isSolved;
                     }
 
-                    moveBackward(state, rows, cols, nextPos.first, nextPos.second);
+                    moveBackward(state, n, nextPos.first, nextPos.second);
                 }
             }
         }
@@ -67,7 +67,7 @@ namespace DistributedSKSolver
         return 0;
     }
 
-    int master(int heuristic, int rank, int size, int *state, int rows, int cols, int regionX, int regionY, map<vector<pair<int, int>>, int> blocks, spdlog::stopwatch stopwatch, shared_ptr<spdlog::logger> logger)
+    int master(int heuristic, int rank, int size, int *state, int n, int regionX, int regionY, map<vector<pair<int, int>>, int> blocks, spdlog::stopwatch stopwatch, shared_ptr<spdlog::logger> logger)
     {
         spdlog::info("------------- Starting master -------------");
 
@@ -83,7 +83,7 @@ namespace DistributedSKSolver
         spdlog::info("Master --> Num. of slaves: {}", idle);
 
         MPI_Send(&tmp, 1, MPI_INT, 1, PBM_TAG, MPI_COMM_WORLD);
-        MPI_Send(state, rows * cols, MPI_INT, 1, PBM_TAG, MPI_COMM_WORLD);
+        MPI_Send(state, n * n, MPI_INT, 1, PBM_TAG, MPI_COMM_WORLD);
         busy[1] = true;
         idle--;
 
@@ -97,11 +97,11 @@ namespace DistributedSKSolver
             switch (status.MPI_TAG)
             {
             case SOLVE_TAG:
-                MPI_Recv(state, rows * cols, MPI_INT, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD, &status);
+                MPI_Recv(state, n * n, MPI_INT, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD, &status);
 
                 isSolved = 1;
 
-                spdlog::info("Master --> Received solution from {}", status.MPI_SOURCE);
+                spdlog::debug("Master --> Received solution from {}", status.MPI_SOURCE);
                 break;
 
             case BnB_TAG:
@@ -162,11 +162,11 @@ namespace DistributedSKSolver
         return isSolved;
     }
 
-    void slave(int heuristic, int rank, int size, int maxDepth, int rows, int cols, int regionX, int regionY, map<vector<pair<int, int>>, int> blocks, spdlog::stopwatch stopwatch, shared_ptr<spdlog::logger> logger)
+    void slave(int heuristic, int rank, int size, int maxDepth, int n, int regionX, int regionY, map<vector<pair<int, int>>, int> blocks, spdlog::stopwatch stopwatch, shared_ptr<spdlog::logger> logger)
     {
         spdlog::info("------------- Starting slave {} -------------", rank);
 
-        int *state = new int[rows * cols];
+        int *state = new int[n * n];
         stack<int *> pool;
         int steps;
         int isSolved = 0;
@@ -188,7 +188,7 @@ namespace DistributedSKSolver
                 break;
 
             case PBM_TAG:
-                MPI_Recv(state, rows * cols, MPI_INT, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD, &status);
+                MPI_Recv(state, n * n, MPI_INT, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD, &status);
 
                 pool.push(state);
                 steps = 0;
@@ -197,12 +197,12 @@ namespace DistributedSKSolver
                 {
                     int *state = pool.top();
                     pool.pop();
-                    isSolved = solveMaxDepthSudoku(pool, 0, maxDepth, heuristic, &steps, state, rows, cols, regionX, regionY, blocks, stopwatch, logger);
+                    isSolved = solveMaxDepthSudoku(pool, 0, maxDepth, heuristic, &steps, state, n, regionX, regionY, blocks, stopwatch, logger);
 
                     if (isSolved == 1)
                     {
                         MPI_Send(&tmp, 0, MPI_INT, 0, SOLVE_TAG, MPI_COMM_WORLD);
-                        MPI_Send(state, rows * cols, MPI_INT, 0, SOLVE_TAG, MPI_COMM_WORLD);
+                        MPI_Send(state, n * n, MPI_INT, 0, SOLVE_TAG, MPI_COMM_WORLD);
                         break;
                     }
 
@@ -221,7 +221,7 @@ namespace DistributedSKSolver
                         {
                             int *stateToSend = pool.top();
                             MPI_Send(&tmp, 1, MPI_INT, slaves[i], PBM_TAG, MPI_COMM_WORLD);
-                            MPI_Send(stateToSend, rows * cols, MPI_INT, slaves[i], PBM_TAG, MPI_COMM_WORLD);
+                            MPI_Send(stateToSend, n * n, MPI_INT, slaves[i], PBM_TAG, MPI_COMM_WORLD);
                             delete stateToSend;
                             pool.pop();
                         }
@@ -245,18 +245,18 @@ namespace DistributedSKSolver
         spdlog::info("------------- Finishing slave {} -------------", rank);
     }
 
-    int solveSudoku(int rank, int size, int heuristic, double initialMaxDepth, int *steps, int *state, int rows, int cols, int regionX, int regionY, map<vector<pair<int, int>>, int> blocks, spdlog::stopwatch stopwatch, shared_ptr<spdlog::logger> logger)
+    int solveSudoku(int rank, int size, int heuristic, double initialMaxDepth, int *steps, int *state, int n, int regionX, int regionY, map<vector<pair<int, int>>, int> blocks, spdlog::stopwatch stopwatch, shared_ptr<spdlog::logger> logger)
     {
         int isSolved = 0;
+        int maxDepth = (int)ceil(initialMaxDepth * countZeros(state, n));
+
         if (rank == 0)
         {
-            int maxDepth = (int)ceil(initialMaxDepth * countZeros(state, rows, cols));
-            isSolved = master(heuristic, rank, size, state, rows, cols, regionX, regionY, blocks, stopwatch, logger);
+            isSolved = master(heuristic, rank, size, state, n, regionX, regionY, blocks, stopwatch, logger);
         }
         else
         {
-            int maxDepth = (int)ceil(initialMaxDepth * countZeros(state, rows, cols));
-            slave(heuristic, rank, size, maxDepth, rows, cols, regionX, regionY, blocks, stopwatch, logger);
+            slave(heuristic, rank, size, maxDepth, n, regionX, regionY, blocks, stopwatch, logger);
         }
 
         return isSolved;

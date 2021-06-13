@@ -16,5 +16,5 @@ namespace SKSolver
     const int HEURISTIC2 = 2;
     const int HEURISTIC3 = 3;
 
-    int solveSudoku(int heuristic, int *steps, int *depth, int *state, int rows, int cols, int regionX, int regionY, std::map<std::vector<std::pair<int, int>>, int> blocks, spdlog::stopwatch sw, std::shared_ptr<spdlog::logger> logger);
+    int solveSudoku(int heuristic, int *steps, int *depth, int *state, int n, int regionX, int regionY, std::map<std::vector<std::pair<int, int>>, int> blocks, spdlog::stopwatch sw, std::shared_ptr<spdlog::logger> logger);
 }

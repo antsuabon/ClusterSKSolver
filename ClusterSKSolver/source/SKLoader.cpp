@@ -19,7 +19,7 @@ vector<string> tokenize(string s, string del = " ")
 	return res;
 }
 
-void loadSudoku(string path, int **sudokuArray, map<vector<pair<int, int>>, int> *blocks, int *rows, int *cols, int *regionX, int *regionY)
+void loadSudoku(string path, int **sudokuArray, map<vector<pair<int, int>>, int> *blocks, int *n, int *regionX, int *regionY)
 {
 
 	ifstream infile(path);
@@ -56,7 +56,7 @@ void loadSudoku(string path, int **sudokuArray, map<vector<pair<int, int>>, int>
 				for (string &var2 : tokens2)
 				{
 					vector<string> tokens3 = tokenize(var2, ",");
-					positions.push_back({stoi(tokens3[1]), stoi(tokens3[0])});
+					positions.push_back({stoi(tokens3[0]), stoi(tokens3[1])});
 				}
 
 				blocks->insert({positions, stoi(tokens1[1])});
@@ -76,15 +76,14 @@ void loadSudoku(string path, int **sudokuArray, map<vector<pair<int, int>>, int>
 		}
 	}
 
-	(*rows) = initialState.size();
-	(*cols) = initialState[0].size();
+	(*n) = initialState.size();
 
-	(*sudokuArray) = new int[(*rows) * (*cols)];
-	for (size_t i = 0; i < (*rows); i++)
+	(*sudokuArray) = new int[(*n) * (*n)];
+	for (size_t i = 0; i < (*n); i++)
 	{
-		for (size_t j = 0; j < (*cols); j++)
+		for (size_t j = 0; j < (*n); j++)
 		{
-			(*sudokuArray)[i * (*cols) + j] = initialState[i][j];
+			(*sudokuArray)[i * (*n) + j] = initialState[i][j];
 		}
 	}
 }

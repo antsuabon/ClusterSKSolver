@@ -2,11 +2,11 @@
 
 using namespace std;
 
-vector<int> getAlternatives(int rows, int cols)
+vector<int> getAlternatives(int n)
 {
 	vector<int> res;
 
-	for (int i = 1; i <= std::max(cols, rows); i++)
+	for (int i = 1; i <= n; i++)
 	{
 		res.push_back(i);
 	}
@@ -14,85 +14,85 @@ vector<int> getAlternatives(int rows, int cols)
 	return res;
 }
 
-bool checkRow(int *state, int rows, int cols, int y, int value)
+bool checkRow(int *state, int n, int y, int value)
 {
 	bool res = true;
 
-	for (int j = 0; j < cols && res; j++)
+	for (int j = 0; j < n && res; j++)
 	{
-		res = state[y * cols + j] != value;
+		res = state[y * n + j] != value;
 	}
 
 	return res;
 }
 
-int countRowCompletedCells(int *state, int rows, int cols, int y)
+float measureRowBenefit(int *state, int n, int y)
 {
-	int res = 1;
+	float res = 1.0;
 
-	for (int j = 0; j < cols && res; j++)
+	for (int j = 0; j < n && res; j++)
 	{
-		if (state[y * cols + j] != 0)
+		if (state[y * n + j] != 0)
 		{
 			res++;
 		}
 	}
 
-	return res;
+	return res / n;
 }
 
-int sumRowCompletedCells(int *state, int rows, int cols, int y)
+int sumRowCompletedCells(int *state, int n, int y)
 {
 	int res = 0;
 
-	for (int j = 0; j < cols && res; j++)
+	for (int j = 0; j < n && res; j++)
 	{
-		res += state[y * cols + j];
+		res += state[y * n + j];
 	}
 
 	return res;
 }
 
-bool checkColumn(int *state, int rows, int cols, int x, int value)
+bool checkColumn(int *state, int n, int x, int value)
 {
 	bool res = true;
 
-	for (int i = 0; i < rows && res; i++)
+	for (int i = 0; i < n && res; i++)
 	{
-		res = state[i * cols + x] != value;
+		res = state[i * n + x] != value;
 	}
 
 	return res;
 }
 
-int countColumnCompletedCells(int *state, int rows, int cols, int x)
+float measureColumnBenefit(int *state, int n, int x)
 {
-	int res = 1;
+	float res = 1;
 
-	for (int i = 0; i < rows; i++)
+	for (int i = 0; i < n; i++)
 	{
-		if (state[i * cols + x] != 0)
+		if (state[i * n + x] != 0)
 		{
 			res++;
 		}
 	}
 
-	return res;
+	return res / n;
 }
 
-int sumColumnCompletedCells(int *state, int rows, int cols, int x)
+int sumColumnCompletedCells(int *state, int n, int x)
 {
 	int res = 0;
 
-	for (int i = 0; i < rows; i++)
+	for (int i = 0; i < n; i++)
 	{
-		res += state[i * cols + x];
+		res += state[i * n + x];
 	}
 
 	return res;
 }
 
-bool checkRegion(int *state, int rows, int cols, int regionX, int regionY, int newI, int newJ, int value)
+bool checkRegion(int *state, int n, int regionX, int regionY, int newI, int newJ, int value)
 {
 	bool res = true;
 
@@ -102,16 +102,16 @@ bool checkRegion(int *state, int rows, int cols, int regionX, int regionY, int n
 		int initialY = (newI / regionY) * regionY;
 		for (int j = 0; j < regionX && res; j++)
 		{
-			res = state[(initialY + i) * cols + initialX + j] != value;
+			res = state[(initialY + i) * n + initialX + j] != value;
 		}
 	}
 
 	return res;
 }
 
-int countRegionCompletedCells(int *state, int rows, int cols, int regionX, int regionY, int newI, int newJ)
+float measureRegionBenefit(int *state, int n, int regionX, int regionY, int newI, int newJ)
 {
-	int res = 1;
+	float res = 1.0;
 
 	int initialX = (newJ / regionX) * regionX;
 	for (int i = 0; i < regionY; i++)
@@ -119,17 +119,17 @@ int countRegionCompletedCells(int *state, int rows, int cols, int regionX, int r
 		int initialY = (newI / regionY) * regionY;
 		for (int j = 0; j < regionX; j++)
 		{
-			if (state[(initialY + i) * cols + initialX + j] != 0)
+			if (state[(initialY + i) * n + initialX + j] != 0)
 			{
 				res++;
 			}
 		}
 	}
 
-	return res;
+	return res / n;
 }
 
-int sumRegionCompletedCells(int *state, int rows, int cols, int regionX, int regionY, int newI, int newJ)
+int sumRegionCompletedCells(int *state, int n, int regionX, int regionY, int newI, int newJ)
 {
 	int res = 0;
 
@@ -139,14 +139,14 @@ int sumRegionCompletedCells(int *state, int rows, int cols, int regionX, int reg
 		int initialY = (newI / regionY) * regionY;
 		for (int j = 0; j < regionX; j++)
 		{
-			res += state[(initialY + i) * cols + initialX + j];
+			res += state[(initialY + i) * n + initialX + j];
 		}
 	}
 
 	return res;
 }
 
-bool checkBlock(int *state, int rows, int cols, int regionX, int regionY, map<vector<pair<int, int>>, int> blocks, int newI, int newJ, int value)
+bool checkBlock(int *state, int n, int regionX, int regionY, map<vector<pair<int, int>>, int> blocks, int newI, int newJ, int value)
 {
 	bool res = true;
 
@@ -155,21 +155,28 @@ bool checkBlock(int *state, int rows, int cols, int regionX, int regionY, map<ve
 		if (find(item.first.begin(), item.first.end(), pair<int, int>(newI, newJ)) != item.first.end())
 		{
 			int sum = 0;
+			bool anyEmpty = false;
 			for (auto &pos : item.first)
 			{
-				sum += (newI == pos.first && newJ == pos.second) ? value : state[pos.first * cols + pos.second];
+				if (!anyEmpty)
+				{
+					anyEmpty = state[pos.first * n + pos.second] == 0;
+				}
+
+				sum += (newI == pos.first && newJ == pos.second) ? value : state[pos.first * n + pos.second];
 			}
 
-			res = res && sum <= item.second;
+			// res = res && sum <= item.second;
+			res = anyEmpty ? res && sum <= item.second : res && sum == item.second;
 		}
 	}
 
 	return res;
 }
 
-int countBlockCompletedCells(int *state, int rows, int cols, int regionX, int regionY, int newI, int newJ, map<vector<pair<int, int>>, int> blocks)
+float measureBlockBenefit(int *state, int n, int regionX, int regionY, int newI, int newJ, map<vector<pair<int, int>>, int> blocks)
 {
-	int res = 1;
+	float res = 1.0;
 
 	for (auto &item : blocks)
 	{
@@ -178,57 +185,60 @@ int countBlockCompletedCells(int *state, int rows, int cols, int regionX, int re
 			int sum = 0;
 			for (auto &pos : item.first)
 			{
-				if (state[pos.first * cols + pos.second] != 0)
+				if (state[pos.first * n + pos.second] != 0)
 				{
 					res++;
 				}
 			}
+
+			res /= item.first.size();
+			break;
 		}
 	}
 
 	return res;
 }
 
-bool isSafe(int *state, int rows, int cols, int regionX, int regionY, map<vector<pair<int, int>>, int> blocks, int newI, int newJ, int alternative)
+bool isSafe(int *state, int n, int regionX, int regionY, map<vector<pair<int, int>>, int> blocks, int newI, int newJ, int alternative)
 {
-	return checkRow(state, rows, cols, newI, alternative) && checkColumn(state, rows, cols, newJ, alternative) && checkRegion(state, rows, cols, regionX, regionY, newI, newJ, alternative) && checkBlock(state, rows, cols, regionX, regionY, blocks, newI, newJ, alternative);
+	return checkRow(state, n, newI, alternative) && checkColumn(state, n, newJ, alternative) && checkRegion(state, n, regionX, regionY, newI, newJ, alternative) && checkBlock(state, n, regionX, regionY, blocks, newI, newJ, alternative);
 }
 
-void moveForward(int *state, int rows, int cols, int newI, int newJ, int alternative)
+void moveForward(int *state, int n, int newI, int newJ, int alternative)
 {
-	state[newI * cols + newJ] = alternative;
+	state[newI * n + newJ] = alternative;
 }
 
-void moveBackward(int *state, int rows, int cols, int newI, int newJ)
+void moveBackward(int *state, int n, int newI, int newJ)
 {
-	state[newI * cols + newJ] = 0;
+	state[newI * n + newJ] = 0;
 }
 
-bool isSolution(int *state, int rows, int cols)
+bool isSolution(int *state, int n)
 {
 	bool found = false;
 
-	for (int i = 0; i < rows && !found; i++)
+	for (int i = 0; i < n && !found; i++)
 	{
-		for (int j = 0; j < cols && !found; j++)
+		for (int j = 0; j < n && !found; j++)
 		{
-			found = state[i * cols + j] == 0;
+			found = state[i * n + j] == 0;
 		}
 	}
 
 	return !found;
 }
 
-pair<int, int> findNextZero(int *state, int rows, int cols)
+pair<int, int> findNextZero(int *state, int n)
 {
 	bool found = false;
 	pair<int, int> res;
 
-	for (int i = 0; i < rows && !found; i++)
+	for (int i = 0; i < n && !found; i++)
 	{
-		for (int j = 0; j < cols && !found; j++)
+		for (int j = 0; j < n && !found; j++)
 		{
-			found = state[i * cols + j] == 0;
+			found = state[i * n + j] == 0;
 			if (found)
 			{
 				res = {i, j};
@@ -239,22 +249,22 @@ pair<int, int> findNextZero(int *state, int rows, int cols)
 	return res;
 }
 
-pair<int, int> findNextZeroByBenefit(int *state, int regionX, int regionY, int rows, int cols, map<vector<pair<int, int>>, int> blocks)
+pair<int, int> findNextZeroByBenefit(int *state, int regionX, int regionY, int n, map<vector<pair<int, int>>, int> blocks)
 {
 	pair<int, int> max;
 	double maxBenefit = 0.;
 	double newBenefit = 0.;
 
-	for (int i = 0; i < rows; i++)
+	for (int i = 0; i < n; i++)
 	{
-		for (int j = 0; j < cols; j++)
+		for (int j = 0; j < n; j++)
 		{
-			if (state[i * cols + j] == 0)
+			if (state[i * n + j] == 0)
 			{
-				newBenefit = countRowCompletedCells(state, rows, cols, i) +
-							 countColumnCompletedCells(state, rows, cols, j) +
-							 countRegionCompletedCells(state, rows, cols, regionX, regionY, i, j) +
-							 countBlockCompletedCells(state, rows, cols, regionX, regionY, i, j, blocks);
+				newBenefit = measureRowBenefit(state, n, i) +
+							 measureColumnBenefit(state, n, j) +
+							 measureRegionBenefit(state, n, regionX, regionY, i, j) +
+							 measureBlockBenefit(state, n, regionX, regionY, i, j, blocks);
 				if (newBenefit > maxBenefit)
 				{
 					max = {i, j};
@@ -267,13 +277,15 @@ pair<int, int> findNextZeroByBenefit(int *state, int regionX, int regionY, int r
 	return max;
 }
 
-pair<int, int> findNextZeroBySum(int *state, int regionX, int regionY, int rows, int cols, map<vector<pair<int, int>>, int> blocks)
+pair<int, int> findNextZeroBySum(int *state, int regionX, int regionY, int n, map<vector<pair<int, int>>, int> blocks)
 {
-	pair<int, int> max;
+	pair<int, int> bestPosition;
 	double maxBenefit = -1.;
 	double maxSize = numeric_limits<double>::max();
 	double newBenefit = -1.;
 	double newSize = -1.;
+
+	int middle = (2 * n + 5) / 4;
 
 	int res = 1;
 
@@ -282,14 +294,14 @@ pair<int, int> findNextZeroBySum(int *state, int regionX, int regionY, int rows,
 		int sum = 0;
 		for (auto &pos : item.first)
 		{
-			if (state[pos.first * cols + pos.second] == 0)
+			if (state[pos.first * n + pos.second] == 0)
 			{
-				newBenefit = abs(8.5 - item.second);
+				newBenefit = abs(middle - item.second);
 				newSize = item.first.size();
 
 				if (newBenefit > maxBenefit && newSize < maxSize)
 				{
-					max = {pos.first, pos.second};
+					bestPosition = {pos.first, pos.second};
 					maxBenefit = newBenefit;
 					maxSize = newSize;
 				}
@@ -297,28 +309,28 @@ pair<int, int> findNextZeroBySum(int *state, int regionX, int regionY, int rows,
 		}
 	}
 
-	return max;
+	return bestPosition;
 }
 
-pair<int, int> findNextZeroBy45Rule(int *state, int regionX, int regionY, int rows, int cols, map<vector<pair<int, int>>, int> blocks)
+pair<int, int> findNextZeroBy45Rule(int *state, int regionX, int regionY, int n, map<vector<pair<int, int>>, int> blocks)
 {
 	pair<int, int> best;
-	double maxBenefit = -1.;
+	double maxSum = -1.;
 
-	for (int i = 0; i < rows; i++)
+	for (int i = 0; i < n; i++)
 	{
-		for (int j = 0; j < cols; j++)
+		for (int j = 0; j < n; j++)
 		{
-			if (state[i * cols + j] == 0)
+			if (state[i * n + j] == 0)
 			{
-				int sumRow = sumRowCompletedCells(state, rows, cols, i);
-				int sumColumn = sumColumnCompletedCells(state, rows, cols, j);
-				int sumRegion = sumRegionCompletedCells(state, rows, cols, regionX, regionY, i, j);
+				int sumRow = sumRowCompletedCells(state, n, i);
+				int sumColumn = sumColumnCompletedCells(state, n, j);
+				int sumRegion = sumRegionCompletedCells(state, n, regionX, regionY, i, j);
 
-				if (sumRow > maxBenefit || sumColumn > maxBenefit || sumRegion > maxBenefit)
+				if (sumRow > maxSum || sumColumn > maxSum || sumRegion > maxSum)
 				{
 					best = {i, j};
-					maxBenefit = max({sumRow, sumColumn, sumRegion});
+					maxSum = max({sumRow, sumColumn, sumRegion});
 				}
 			}
 		}
@@ -327,11 +339,36 @@ pair<int, int> findNextZeroBy45Rule(int *state, int regionX, int regionY, int ro
 	return best;
 }
 
-int countZeros(int *state, int rows, int cols)
+pair<int, int> findNextPosition(int heuristic, int *state, int n, int regionX, int regionY, map<vector<pair<int, int>>, int> blocks)
+{
+	pair<int, int> nextPos;
+
+	switch (heuristic)
+	{
+	case NORMAL:
+		nextPos = findNextZero(state, n);
+		break;
+	case HEURISTIC1:
+		nextPos = findNextZeroByBenefit(state, regionX, regionY, n, blocks);
+		break;
+	case HEURISTIC2:
+		nextPos = findNextZeroBySum(state, regionX, regionY, n, blocks);
+		break;
+	case HEURISTIC3:
+		nextPos = findNextZeroBy45Rule(state, regionX, regionY, n, blocks);
+		break;
+	default:
+		break;
+	}
+
+	return nextPos;
+}
+
+int countZeros(int *state, int n)
 {
 	int res = 0;
 
-	for (int i = 0; i < rows * cols; i++)
+	for (int i = 0; i < n * n; i++)
 	{
 		if (state[i] == 0)
 		{
@@ -342,18 +379,18 @@ int countZeros(int *state, int rows, int cols)
 	return res;
 }
 
-void printState(int *state, int rows, int cols, int regionX, int regionY)
+void printState(int *state, int n, int regionX, int regionY)
 {
-	for (size_t i = 0; i < rows; i++)
+	for (size_t i = 0; i < n; i++)
 	{
 
 		ostringstream oss;
 		oss << internal << setfill('-') << setw(regionX * 2 + regionX) << "";
 
 		string separator = "";
-		for (size_t i = 0; i < cols / regionX; i++)
+		for (size_t i = 0; i < n / regionX; i++)
 		{
-			if (i != 0 && i != cols - 1)
+			if (i != 0 && i != n - 1)
 			{
 				separator += oss.str() + "- ";
 			}
@@ -364,12 +401,12 @@ void printState(int *state, int rows, int cols, int regionX, int regionY)
 		}
 
 		string row = "\t";
-		for (size_t j = 0; j < cols; j++)
+		for (size_t j = 0; j < n; j++)
 		{
 			ostringstream oss;
-			oss << internal << setfill(' ') << setw(2) << to_string(state[i * cols + j]);
+			oss << internal << setfill(' ') << setw(2) << to_string(state[i * n + j]);
 
-			if (j % regionX == regionX - 1 && j != cols - 1)
+			if (j % regionX == regionX - 1 && j != n - 1)
 			{
 				row += oss.str() + " | ";
 			}
@@ -381,7 +418,7 @@ void printState(int *state, int rows, int cols, int regionX, int regionY)
 
 		spdlog::info(row);
 
-		if (i % regionY == regionY - 1 && i != rows - 1)
+		if (i % regionY == regionY - 1 && i != n - 1)
 		{
 
 			spdlog::info("\t{}", separator);
@@ -389,14 +426,13 @@ void printState(int *state, int rows, int cols, int regionX, int regionY)
 	}
 }
 
-string printStateLog(int *state, int rows, int cols)
+string printStateLog(int *state, int n)
 {
 	string res = "";
-	int n = rows * cols;
-	for (size_t i = 0; i < n; i++)
+	for (size_t i = 0; i < n * n; i++)
 	{
 		res += to_string(state[i]);
-		if (i != n - 1)
+		if (i != (n * n) - 1)
 		{
 			res += ",";
 		}

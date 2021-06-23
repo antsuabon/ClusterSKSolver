@@ -10,9 +10,9 @@
 #include <sstream>
 
 const int NORMAL = 0;
-const int HEURISTIC1 = 1;
-const int HEURISTIC2 = 2;
-const int HEURISTIC3 = 3;
+const int BENEFIT = 1;
+const int MIN_SECTOR = 2;
+const int RULE_45 = 3;
 
 std::pair<int, int> findNextZero(int *state, int n);
 std::pair<int, int> findNextZeroByBenefit(int *state, int regionX, int regionY, int n, std::map<std::vector<std::pair<int, int>>, int> blocks);

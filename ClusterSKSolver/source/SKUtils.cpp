@@ -155,19 +155,18 @@ bool checkBlock(int *state, int n, int regionX, int regionY, map<vector<pair<int
 		if (find(item.first.begin(), item.first.end(), pair<int, int>(newI, newJ)) != item.first.end())
 		{
 			int sum = 0;
-			bool anyEmpty = false;
+			int emptyCount = 0;
 			for (auto &pos : item.first)
 			{
-				if (!anyEmpty)
+				if (state[pos.first * n + pos.second] == 0)
 				{
-					anyEmpty = state[pos.first * n + pos.second] == 0;
+					emptyCount++;
 				}
 
 				sum += (newI == pos.first && newJ == pos.second) ? value : state[pos.first * n + pos.second];
 			}
 
-			// res = res && sum <= item.second;
-			res = anyEmpty ? res && sum <= item.second : res && sum == item.second;
+			res = emptyCount > 1 ? res && sum <= item.second : res && sum == item.second;
 		}
 	}
 
@@ -348,13 +347,13 @@ pair<int, int> findNextPosition(int heuristic, int *state, int n, int regionX, i
 	case NORMAL:
 		nextPos = findNextZero(state, n);
 		break;
-	case HEURISTIC1:
+	case BENEFIT:
 		nextPos = findNextZeroByBenefit(state, regionX, regionY, n, blocks);
 		break;
-	case HEURISTIC2:
+	case MIN_SECTOR:
 		nextPos = findNextZeroBySum(state, regionX, regionY, n, blocks);
 		break;
-	case HEURISTIC3:
+	case RULE_45:
 		nextPos = findNextZeroBy45Rule(state, regionX, regionY, n, blocks);
 		break;
 	default:

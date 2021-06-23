@@ -32,7 +32,7 @@ int main(int argc, char **argv)
 
 	int algorithm = stoi(argv[2]);
 	int heuristic = stoi(argv[3]);
-	double initialMaxDepth = stod(argv[4]);
+	int auxParam = stod(argv[4]);
 
 	if (algorithm < 0 || algorithm > 2)
 	{
@@ -49,10 +49,10 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	if (initialMaxDepth < 0 || initialMaxDepth > 1)
+	if (algorithm > 0 && auxParam <= 0)
 	{
 		if (rank == 0)
-			spdlog::error("Invalid initial max depth");
+			spdlog::error("Algorithm parameter is invalid");
 		return 1;
 	}
 
@@ -102,12 +102,12 @@ int main(int argc, char **argv)
 
 	case 1:
 		// Ejecución secuencial del algoritmo con distribución estática de trabajos
-		isSolved = CentralSKSolver::solveSudoku(rank, size, heuristic, initialMaxDepth, &steps, sudokuArray, n, regionX, regionY, blocks, sw, logger);
+		isSolved = CentralSKSolver::solveSudoku(rank, size, heuristic, auxParam, &steps, sudokuArray, n, regionX, regionY, blocks, sw, logger);
 		break;
 
 	case 2:
 		// Ejecución secuencial del algoritmo con distribución dinámica de trabajos
-		isSolved = DistributedSKSolver::solveSudoku(rank, size, heuristic, initialMaxDepth, &steps, sudokuArray, n, regionX, regionY, blocks, sw, logger);
+		isSolved = DistributedSKSolver::solveSudoku(rank, size, heuristic, auxParam, &steps, sudokuArray, n, regionX, regionY, blocks, sw, logger);
 		break;
 
 	default:

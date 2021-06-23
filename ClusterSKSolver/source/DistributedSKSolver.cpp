@@ -4,7 +4,7 @@ using namespace std;
 
 namespace DistributedSKSolver
 {
-    int solveMaxDepthSudoku(stack<int *> &pool, int depth, int maxDepth, int heuristic, int *steps, int *state, int n, int regionX, int regionY, map<vector<pair<int, int>>, int> blocks, spdlog::stopwatch stopwatch, shared_ptr<spdlog::logger> logger)
+    int solveSudokuWithHelp(int depth, int refreshStep, int heuristic, int *steps, int *state, int n, int regionX, int regionY, map<vector<pair<int, int>>, int> blocks, spdlog::stopwatch stopwatch, shared_ptr<spdlog::logger> logger)
     {
         (*steps)++;
 
@@ -19,33 +19,9 @@ namespace DistributedSKSolver
         {
             return 1;
         }
-        else if (depth >= maxDepth)
-        {
-            int *stateToSave = new int[n * n];
-            copy(state, state + (n * n), stateToSave);
-            pool.push(stateToSave);
-        }
         else
         {
-            pair<int, int> nextPos;
-
-            switch (heuristic)
-            {
-            case NORMAL:
-                nextPos = findNextZero(state, n);
-                break;
-            case HEURISTIC1:
-                nextPos = findNextZeroByBenefit(state, regionX, regionY, n, blocks);
-                break;
-            case HEURISTIC2:
-                nextPos = findNextZeroBySum(state, regionX, regionY, n, blocks);
-                break;
-            case HEURISTIC3:
-                nextPos = findNextZeroBy45Rule(state, regionX, regionY, n, blocks);
-                break;
-            default:
-                break;
-            }
+            pair<int, int> nextPos = findNextPosition(heuristic, state, n, regionX, regionY, blocks);
 
             for (int &alternative : getAlternatives(n))
             {
@@ -53,7 +29,47 @@ namespace DistributedSKSolver
                 {
                     moveForward(state, n, nextPos.first, nextPos.second, alternative);
 
-                    int isSolved = solveMaxDepthSudoku(pool, depth + 1, maxDepth, heuristic, steps, state, n, regionX, regionY, blocks, stopwatch, logger);
+                    int isSolved = 0;
+
+                    if (*steps % refreshStep == 0)
+                    {
+                        int neededSlaves = 1;
+                        int grantedSlaves;
+
+                        MPI_Status status;
+
+                        MPI_Send(&isSolved, 1, MPI_INT, 0, BnB_TAG, MPI_COMM_WORLD);
+                        MPI_Send(&neededSlaves, 1, MPI_INT, 0, BnB_TAG, MPI_COMM_WORLD);
+
+                        MPI_Recv(&grantedSlaves, 1, MPI_INT, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+                        if (status.MPI_TAG == BnB_TAG)
+                        {
+                            int *slaves = new int[grantedSlaves];
+                            MPI_Recv(slaves, grantedSlaves, MPI_INT, 0, BnB_TAG, MPI_COMM_WORLD, &status);
+
+                            for (size_t i = 0; i < grantedSlaves; i++)
+                            {
+                                MPI_Send(&isSolved, 1, MPI_INT, slaves[i], PBM_TAG, MPI_COMM_WORLD);
+                                MPI_Send(state, n * n, MPI_INT, slaves[i], PBM_TAG, MPI_COMM_WORLD);
+                            }
+
+                            delete slaves;
+
+                            if (grantedSlaves == 0)
+                            {
+                                isSolved = solveSudokuWithHelp(depth + 1, refreshStep, heuristic, steps, state, n, regionX, regionY, blocks, stopwatch, logger);
+                            }
+                        }
+                        else
+                        {
+                            return 0;
+                        }
+                    }
+                    else
+                    {
+                        isSolved = solveSudokuWithHelp(depth + 1, refreshStep, heuristic, steps, state, n, regionX, regionY, blocks, stopwatch, logger);
+                    }
+
                     if (isSolved == 1)
                     {
                         return isSolved;
@@ -162,7 +178,7 @@ namespace DistributedSKSolver
         return isSolved;
     }
 
-    void slave(int heuristic, int rank, int size, int maxDepth, int n, int regionX, int regionY, map<vector<pair<int, int>>, int> blocks, spdlog::stopwatch stopwatch, shared_ptr<spdlog::logger> logger)
+    void slave(int heuristic, int rank, int size, int refreshStep, int n, int regionX, int regionY, map<vector<pair<int, int>>, int> blocks, spdlog::stopwatch stopwatch, shared_ptr<spdlog::logger> logger)
     {
         spdlog::info("------------- Starting slave {} -------------", rank);
 
@@ -170,9 +186,6 @@ namespace DistributedSKSolver
         stack<int *> pool;
         int steps;
         int isSolved = 0;
-        int neededSlaves;
-        int grantedSlaves;
-        int *slaves;
 
         MPI_Status status;
         bool active = true;
@@ -197,40 +210,13 @@ namespace DistributedSKSolver
                 {
                     int *state = pool.top();
                     pool.pop();
-                    isSolved = solveMaxDepthSudoku(pool, 0, maxDepth, heuristic, &steps, state, n, regionX, regionY, blocks, stopwatch, logger);
+                    isSolved = solveSudokuWithHelp(0, refreshStep, heuristic, &steps, state, n, regionX, regionY, blocks, stopwatch, logger);
 
                     if (isSolved == 1)
                     {
                         MPI_Send(&tmp, 0, MPI_INT, 0, SOLVE_TAG, MPI_COMM_WORLD);
                         MPI_Send(state, n * n, MPI_INT, 0, SOLVE_TAG, MPI_COMM_WORLD);
                         break;
-                    }
-
-                    neededSlaves = pool.size();
-
-                    MPI_Send(&tmp, 1, MPI_INT, 0, BnB_TAG, MPI_COMM_WORLD);
-                    MPI_Send(&neededSlaves, 1, MPI_INT, 0, BnB_TAG, MPI_COMM_WORLD);
-
-                    MPI_Recv(&grantedSlaves, 1, MPI_INT, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-                    if (status.MPI_TAG == BnB_TAG)
-                    {
-                        slaves = new int[grantedSlaves];
-                        MPI_Recv(slaves, grantedSlaves, MPI_INT, 0, BnB_TAG, MPI_COMM_WORLD, &status);
-
-                        for (size_t i = 0; i < grantedSlaves; i++)
-                        {
-                            int *stateToSend = pool.top();
-                            MPI_Send(&tmp, 1, MPI_INT, slaves[i], PBM_TAG, MPI_COMM_WORLD);
-                            MPI_Send(stateToSend, n * n, MPI_INT, slaves[i], PBM_TAG, MPI_COMM_WORLD);
-                            delete stateToSend;
-                            pool.pop();
-                        }
-
-                        delete slaves;
-                    }
-                    else
-                    {
-                        isSolved = 1;
                     }
                 }
                 break;
@@ -245,10 +231,9 @@ namespace DistributedSKSolver
         spdlog::info("------------- Finishing slave {} -------------", rank);
     }
 
-    int solveSudoku(int rank, int size, int heuristic, double initialMaxDepth, int *steps, int *state, int n, int regionX, int regionY, map<vector<pair<int, int>>, int> blocks, spdlog::stopwatch stopwatch, shared_ptr<spdlog::logger> logger)
+    int solveSudoku(int rank, int size, int heuristic, int refreshStep, int *steps, int *state, int n, int regionX, int regionY, map<vector<pair<int, int>>, int> blocks, spdlog::stopwatch stopwatch, shared_ptr<spdlog::logger> logger)
     {
         int isSolved = 0;
-        int maxDepth = (int)ceil(initialMaxDepth * countZeros(state, n));
 
         if (rank == 0)
         {
@@ -256,7 +241,7 @@ namespace DistributedSKSolver
         }
         else
         {
-            slave(heuristic, rank, size, maxDepth, n, regionX, regionY, blocks, stopwatch, logger);
+            slave(heuristic, rank, size, refreshStep, n, regionX, regionY, blocks, stopwatch, logger);
         }
 
         return isSolved;

@@ -21,25 +21,7 @@ namespace CentralSKSolver
 		}
 		else
 		{
-			pair<int, int> nextPos;
-
-			switch (heuristic)
-			{
-			case NORMAL:
-				nextPos = findNextZero(state, n);
-				break;
-			case HEURISTIC1:
-				nextPos = findNextZeroByBenefit(state, regionX, regionY, n, blocks);
-				break;
-			case HEURISTIC2:
-				nextPos = findNextZeroBySum(state, regionX, regionY, n, blocks);
-				break;
-			case HEURISTIC3:
-				nextPos = findNextZeroBy45Rule(state, regionX, regionY, n, blocks);
-				break;
-			default:
-				break;
-			}
+			pair<int, int> nextPos = findNextPosition(heuristic, state, n, regionX, regionY, blocks);
 
 			for (int &alternative : getAlternatives(n))
 			{
@@ -84,25 +66,7 @@ namespace CentralSKSolver
 		}
 		else
 		{
-			pair<int, int> nextPos;
-
-			switch (heuristic)
-			{
-			case NORMAL:
-				nextPos = findNextZero(state, n);
-				break;
-			case HEURISTIC1:
-				nextPos = findNextZeroByBenefit(state, regionX, regionY, n, blocks);
-				break;
-			case HEURISTIC2:
-				nextPos = findNextZeroBySum(state, regionX, regionY, n, blocks);
-				break;
-			case HEURISTIC3:
-				nextPos = findNextZeroBy45Rule(state, regionX, regionY, n, blocks);
-				break;
-			default:
-				break;
-			}
+			pair<int, int> nextPos = findNextPosition(heuristic, state, n, regionX, regionY, blocks);
 
 			for (int &alternative : getAlternatives(n))
 			{
@@ -140,6 +104,12 @@ namespace CentralSKSolver
 		spdlog::info("------------- Starting master -------------");
 
 		spdlog::info("Master -> {} tasks left!", taskPool.size());
+
+		if (taskPool.size() < size - 1)
+		{
+			spdlog::error("Initial pool depth is geater than the available empty cells");
+			exit(EXIT_FAILURE);
+		}
 
 		int activeWorkers;
 		for (activeWorkers = 0; activeWorkers < size - 1; activeWorkers++)
@@ -240,19 +210,23 @@ namespace CentralSKSolver
 
 	// ####################################################################################################################################################
 
-	/**
-	 * 
-	 */
-	int solveSudoku(int rank, int size, int heuristic, double initialMaxDepth, int *steps, int *state, int n, int regionX, int regionY, map<vector<pair<int, int>>, int> blocks, spdlog::stopwatch stopwatch, shared_ptr<spdlog::logger> logger)
+	int solveSudoku(int rank, int size, int heuristic, int initialMaxDepth, int *steps, int *state, int n, int regionX, int regionY, map<vector<pair<int, int>>, int> blocks, spdlog::stopwatch stopwatch, shared_ptr<spdlog::logger> logger)
 	{
 		int isSolved = 0;
+		if (initialMaxDepth > countZeros(state, n))
+		{
+			if (rank == 0)
+			{
+				spdlog::error("Initial pool depth is geater than the available empty cells");
+			}
+			exit(EXIT_FAILURE);
+		}
 
 		if (rank == 0)
 		{
-			int maxDepth = (int)ceil(initialMaxDepth * countZeros(state, n));
 
-			spdlog::info("Max. depth: {}", maxDepth);
-			isSolved = master(heuristic, rank, size, maxDepth, state, n, regionX, regionY, blocks, stopwatch, logger);
+			spdlog::info("Max. depth: {}", initialMaxDepth);
+			isSolved = master(heuristic, rank, size, initialMaxDepth, state, n, regionX, regionY, blocks, stopwatch, logger);
 
 			return isSolved;
 		}
